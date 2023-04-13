@@ -1,0 +1,12 @@
+*
+
+!.gitignore
+!meson.build
+
+!src/
+!src/**/*
+!shaders/
+!shaders/**/*
+
+!subprojects/
+!subprojects/*.wrap
