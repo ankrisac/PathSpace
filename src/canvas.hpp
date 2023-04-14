@@ -1,18 +1,6 @@
 #pragma once
-
 #include "prelude.hpp"
-#include <epoxy/gl.h>
-#include <GLFW/glfw3.h>
-
-struct Window {
-    GLFWwindow* m_handle;
-
-    Window(Size size);    
-    ~Window();
-
-    bool should_close();
-    void update();
-};
+#include "gfx.hpp"
 
 struct Frame {
     GLuint m_program;
@@ -24,28 +12,6 @@ struct Frame {
     ~Frame();
 
     void draw(const Grid2D<Color>& image);
-};
-
-
-
-template<GLenum TARGET, typename T>
-struct Buffer {
-    std::vector<T> data; 
-    GLuint handle;
-
-    Buffer() { glGenBuffers(1, &handle); }
-    ~Buffer() { glGenBuffers(1, &handle); }
-
-    Buffer(const Buffer&) = delete;
-    Buffer& operator=(const Buffer&) = delete;
-
-    void bind() {
-        glBindBuffer(TARGET, handle);
-    }
-    void upload(GLenum usage) {
-        glBindBuffer(TARGET, handle);
-        glBufferData(TARGET, data.size() * sizeof(T), data.data(), usage);
-    }
 };
 
 struct Vertex {
@@ -79,9 +45,20 @@ public:
 
     void draw();
 
-    void line(Vec2 a, Vec2 b, bool cap=true);
-    void circle(Vec2 pos, f32 radius, bool fill=true, bool stroke=true);
+    struct LineArgs { 
+        bool cap_a = true; 
+        bool cap_b = true; 
+    };
+    void line(Vec2 a, Vec2 b, LineArgs args = {true, true});
+    void arrow(Vec2 pos, Vec2 dir);
 
+    struct CircleArgs { 
+        bool fill = true; 
+        bool stroke = true; 
+    };
+    void circle(Vec2 pos, f32 radius, CircleArgs args = {true, true});
+
+    
 private:
     void polygon_interior(Vec2 pos, f32 radius, u32 sides, Color color);
     void polygon_boundary(Vec2 pos, f32 radius, u32 sides, Color color);

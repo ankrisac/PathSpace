@@ -1,7 +1,5 @@
-#include <glm/glm.hpp>
-#include <fmt/core.h>
-
 #include "prelude.hpp"
+#include "gfx.hpp"
 #include "canvas.hpp"
 
 #include <random>
@@ -24,8 +22,10 @@ int main(int argc, char **argv) {
 
         //frame.draw(image);
 
+        cnv.style.width = 0.005;
         cnv.line({ -0.5, -0.5 }, { 0.5, 0.5 });
         cnv.circle({ 0.5, 0.0 }, 0.2);
+        cnv.arrow({0.0, 0.0}, {-1.0, 0.0});
 
         cnv.draw();
 

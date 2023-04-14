@@ -2,8 +2,8 @@ project(
   'PathSpace', 'cpp',
   version : '0.1',
   default_options : [
-    'warning_level=3',
-    'cpp_std=c++20'
+    'cpp_std=c++20',
+    'warning_level=3'
   ]
 )
 
@@ -11,7 +11,8 @@ executable(
   'main', 
   sources: [
     'src/main.cpp',
-    'src/canvas.cpp'
+    'src/gfx.cpp',
+    'src/canvas.cpp',
   ],
   dependencies: [
     dependency('glfw3'),
@@ -21,5 +22,6 @@ executable(
   ],
   cpp_args: [
     '-Wno-unused-parameter',
+    '-Wno-volatile'
   ]
 )
