@@ -1,9 +1,10 @@
 #pragma once
 
-#include <cstdint>
 #include <vector>
 #include <string>
 
+
+#include <cstdint>
 using i8  = int8_t;
 using i16 = int16_t;
 using i32 = int32_t;
@@ -17,10 +18,10 @@ using u64 = uint64_t;
 using f32 = float;
 using f64 = double;
 
-
+#include <numbers>
+constexpr f32 PI = 3.14159265358979323846;
 
 #include <glm/glm.hpp>
-
 using Vec2 = glm::vec2;
 using Vec3 = glm::vec3;
 using Vec4 = glm::vec4;
@@ -46,7 +47,7 @@ struct Grid2D {
     T& get(i32 i, i32 j) {
         return data[i + size.x * j];
     }
-    const T& get(i32 i, i32 j) {
+    const T& get(i32 i, i32 j) const {
         return data[i + size.x * j];
     }
 };
