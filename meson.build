@@ -9,12 +9,16 @@ project(
 executable(
   'main', 
   sources: [
-    'src/main.cpp'
+    'src/main.cpp',
+    'src/canvas.cpp'
   ],
   dependencies: [
     dependency('glfw3'),
     dependency('epoxy'),
-    dependency('glm')
+    dependency('glm'),
+    dependency('fmt')
   ],
-  link_args: '-Wno-unused-arguments'
+  cpp_args: [
+    '-Wno-unused-parameter',
+  ]
 )
