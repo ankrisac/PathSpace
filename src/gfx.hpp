@@ -3,8 +3,14 @@
 #include <epoxy/gl.h>
 #include <GLFW/glfw3.h>
 
+struct Mouse {
+    Vec2 pos;
+    bool pressed;
+    bool released;
+};
+
 struct Window {
-    GLFWwindow* m_handle;
+    GLFWwindow* handle;
 
     Window(Size size);    
     ~Window();

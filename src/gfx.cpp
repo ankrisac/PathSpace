@@ -58,23 +58,25 @@ Window::Window(Size size) {
 
     glfwWindowHint(GLFW_SAMPLES, 4);
 
-    m_handle = glfwCreateWindow(size.x, size.y, "PathSpace", nullptr, nullptr);
+    handle = glfwCreateWindow(size.x, size.y, "PathSpace", nullptr, nullptr);
 
-    glfwMakeContextCurrent(m_handle);
+    glfwMakeContextCurrent(handle);
     glDebugMessageCallback(debug_callback, nullptr);
 
     glEnable(GL_MULTISAMPLE);
+    glEnable(GL_BLEND); 
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
 }
 Window::~Window() {
-    glfwDestroyWindow(m_handle);
+    glfwDestroyWindow(handle);
     glfwTerminate();
 }
 
 bool Window::should_close() {
-    return glfwWindowShouldClose(m_handle);
+    return glfwWindowShouldClose(handle);
 }
 void Window::update() {
-    glfwSwapBuffers(m_handle);
+    glfwSwapBuffers(handle);
     glfwPollEvents();
 }
 

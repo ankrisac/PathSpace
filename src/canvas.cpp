@@ -38,7 +38,7 @@ Frame::~Frame() {
     glDeleteProgram(m_program);
 }
 
-void Frame::draw(const Grid2D<Color>& image) {
+void Frame::render(const Grid2D<Color>& image) {
     glBindTexture(GL_TEXTURE_2D, m_texture);
     glTexImage2D(
         GL_TEXTURE_2D, 0, GL_RGBA, 
@@ -55,6 +55,15 @@ void Frame::draw(const Grid2D<Color>& image) {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
+void ICanvas::arrow(Vec2 pos, Vec2 dir) {
+    Vec2 udir = 3 * style.width * glm::normalize(dir);
+    Vec2 perp = { -udir.y, udir.x };
+    Vec2 end = pos + dir;
+
+    line(end, pos);
+    line(end, end - udir + perp);
+    line(end, end - udir - perp);
+}
 
 
 Canvas::Canvas() {
@@ -71,7 +80,7 @@ Canvas::~Canvas() {
     glDeleteProgram(program);
 }
 
-void Canvas::draw() {
+void Canvas::render() {
     vertices.upload(GL_STREAM_DRAW);
     indices.upload(GL_STREAM_DRAW);
 
@@ -85,9 +94,16 @@ void Canvas::draw() {
     indices.data.clear();
 }
 
-void Canvas::line(Vec2 a, Vec2 b, LineArgs args) {
-    Vec2 dir  = glm::normalize(b - a);
-    Vec2 perp = style.width * Vec2(-dir.y, dir.x); 
+void Canvas::line(Vec2 a, Vec2 b, Cap cap) {
+    f32 radius = 0.5 * style.width;
+
+    Vec2 dir  = radius * glm::normalize(b - a);
+    Vec2 perp = Vec2(-dir.y, dir.x); 
+
+    if(cap == Cap::Square) {
+        a -= dir;
+        b += dir;
+    }
 
     u32 base = vertices.data.size(); 
     vertices.data.push_back({ a + perp, style.stroke });
@@ -99,20 +115,10 @@ void Canvas::line(Vec2 a, Vec2 b, LineArgs args) {
         indices.data.push_back(base + idx);
     }
 
-    f32 radius = style.width;
     u32 sides = circle_sides(radius);
 
-    if(args.cap_a) polygon_interior(a, radius, sides, style.stroke);
-    if(args.cap_b) polygon_interior(b, radius, sides, style.stroke);
-}
-void Canvas::arrow(Vec2 pos, Vec2 dir) {
-    Vec2 udir = 3 * style.width * glm::normalize(dir);
-    Vec2 perp = { -udir.y, udir.x };
-    Vec2 end = pos + dir;
-
-    line(end, pos);
-    line(end, end - udir + perp, { .cap_a = false });
-    line(end, end - udir - perp, { .cap_a = false });
+    if(cap == Cap::Round) polygon_interior(a, radius, sides, style.stroke);
+    if(cap == Cap::Round) polygon_interior(b, radius, sides, style.stroke);
 }
 
 Vec2 complex_mul(Vec2 a, Vec2 b) {
@@ -143,8 +149,8 @@ void Canvas::polygon_boundary(Vec2 pos, f32 radius, u32 sides, Color color) {
     f32 angle   = 2 * PI / sides;
     Vec2 rotor  = Vec2(std::cos(angle), std::sin(angle));
 
-    Vec2 rad1 = Vec2(radius - style.width, 0.0);
-    Vec2 rad2 = Vec2(radius + style.width, 0.0);
+    Vec2 rad1 = Vec2(radius - 0.5 * style.width, 0.0);
+    Vec2 rad2 = Vec2(radius + 0.5 * style.width, 0.0);
     
     u32 base = vertices.data.size();
     for(u32 i = 0; i < sides; i++) {
@@ -164,4 +170,46 @@ void Canvas::circle(Vec2 pos, f32 radius, CircleArgs args) {
     u32 sides = circle_sides(radius);
     if(args.fill)   polygon_interior(pos, radius, sides, style.fill);
     if(args.stroke) polygon_boundary(pos, radius, sides, style.stroke);
+}
+
+
+constexpr const char* linecap_string(Cap cap) {
+    switch(cap) {
+        case Cap::Butt:   return "butt";
+        case Cap::Round:  return "round";
+        case Cap::Square: return "square";
+        default: return "";
+    }
+}
+void SvgCanvas::line(Vec2 a, Vec2 b, Cap cap) { 
+    primitives.push_back(fmt::format(
+        "  <line x1='{}' y1='{}' x2='{}' y2='{}'\n"
+        "    {} stroke-linecap='{}'/>\n",
+        a.x, a.y, b.x, b.y, style.to_string(), linecap_string(cap)
+    ));
+}
+void SvgCanvas::circle(Vec2 pos, f32 radius, CircleArgs args) {
+    primitives.push_back(fmt::format(
+        "  <circle cx='{}' cy='{}' r='{}'\n"
+        "    {}/>\n",
+        pos.x, pos.y, std::abs(radius), style.to_string()
+    ));
+}
+
+void SvgCanvas::save(const std::string path) {
+    std::fstream file;
+    file.open("out/example.svg", std::ios::out | std::ios::trunc);
+
+    if (!file.is_open()) {
+        fmt::print("Error opening {}\n", "out/example.svg");
+        std::abort();
+    }
+
+    file << "<svg viewBox='-1 -1 2 2' xmlns='http://www.w3.org/2000/svg'>\n";
+    file << "  <g transform='scale(1,-1)'>\n";
+    for (auto& p : primitives) {
+        file << p;
+    }
+    file << "</svg>\n";
+    file.close();
 }

@@ -4,6 +4,11 @@
 
 #include <random>
 
+#include <fstream>
+
+void draw(ICanvas& cnv) {
+}
+
 int main(int argc, char **argv) {
     Size size = { 1024, 1024 };
     
@@ -12,22 +17,29 @@ int main(int argc, char **argv) {
     Frame frame {};
     Grid2D<Color> image { size, {1.0, 1.0, 1.0, 1.0 }};
 
-    Canvas cnv;
+    {
+        SvgCanvas cnv;
+        draw(cnv);
+        cnv.save("out/example.svg");
+    }
 
     f32 t = 0.0;
+
+
+    Canvas cnv;
 
     while(!window.should_close()) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.1, 0.1, 0.1, 1.0);
 
-        //frame.draw(image);
 
-        cnv.style.width = 0.005;
+        frame.render(image);
+
+        cnv.style.width = 0.05;
         cnv.line({ -0.5, -0.5 }, { 0.5, 0.5 });
         cnv.circle({ 0.5, 0.0 }, 0.2);
-        cnv.arrow({0.0, 0.0}, {-1.0, 0.0});
-
-        cnv.draw();
+        cnv.arrow({0.0, 0.0}, {-0.5, 0.2});
+        cnv.render();
 
         t += 0.01;
 
