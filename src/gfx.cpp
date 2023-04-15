@@ -72,14 +72,6 @@ Window::~Window() {
     glfwTerminate();
 }
 
-bool Window::should_close() {
-    return glfwWindowShouldClose(handle);
-}
-void Window::update() {
-    glfwSwapBuffers(handle);
-    glfwPollEvents();
-}
-
 
 
 #include <fstream>

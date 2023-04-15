@@ -7,18 +7,25 @@ project(
   ]
 )
 
+cc = meson.get_compiler('c')
+
 executable(
   'main', 
   sources: [
     'src/main.cpp',
     'src/gfx.cpp',
     'src/canvas.cpp',
+    'src/frame.cpp',
+
+    'src/shapes/plane.cpp',
+    'src/shapes/sphere.cpp',
   ],
   dependencies: [
+    cc.find_library('m', required: false),
     dependency('glfw3'),
     dependency('epoxy'),
     dependency('glm'),
-    dependency('fmt')
+    dependency('fmt'),
   ],
   cpp_args: [
     '-Wno-unused-parameter',
