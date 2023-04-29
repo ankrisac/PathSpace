@@ -1,4 +1,5 @@
-#include "gfx.hpp"
+#include "core.hpp"
+#include <GLFW/glfw3.h>
 
 std::string debug_source(GLenum source) {
     switch(source) {
@@ -36,17 +37,16 @@ std::string debug_severity(GLenum severity) {
 
 void debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, 
                     GLsizei length, const GLchar *message, const void *userParam) {
-    fmt::print("{}.{}.{}: {}\n", 
-        debug_source(source),
-        debug_type(type),
-        debug_severity(severity),
-        message
-    );
+    std::cerr 
+        << debug_source(source)
+        << "." << debug_type(type)
+        << "." << debug_severity(severity)
+        << ": "  << message << std::endl;
 
     if(severity == GL_DEBUG_SEVERITY_HIGH) std::abort();
 }   
 
-Window::Window(Size size) {
+Window::Window(ivec2 size) {
     glfwInit();        
 
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -72,53 +72,33 @@ Window::~Window() {
     glfwTerminate();
 }
 
-
-
-#include <fstream>
-#include <sstream>
-
-std::string read_file(std::string path) {
-    std::fstream file(path);
-
-    if (!file.is_open()) {
-        fmt::print("Error: Cannot open file [{}]\n", path);
-        std::abort();
-    }
- 
-    std::stringstream stream;
-    stream << file.rdbuf();
-    return stream.str();
+bool Window::should_close() {
+    return glfwWindowShouldClose(handle);
 }
 
-GLuint load_shader(std::string path, GLenum type) {
-    GLuint handle = glCreateShader(type);
-    glObjectLabel(GL_SHADER, handle, path.size(), path.c_str());
-
-    std::string src = read_file(path);
-    const GLchar* source = static_cast<const GLchar*>(src.c_str());
-    glShaderSource(handle, 1, &source, 0);
-    glCompileShader(handle);
-
-    return handle;
+void Window::update() {
+    glfwGetCursorPos(handle, &mouse.pos.x, &mouse.pos.y);
+    mouse.left.update(glfwGetMouseButton(handle, GLFW_MOUSE_BUTTON_LEFT));
+    mouse.middle.update(glfwGetMouseButton(handle, GLFW_MOUSE_BUTTON_MIDDLE));
+    mouse.right.update(glfwGetMouseButton(handle, GLFW_MOUSE_BUTTON_RIGHT));
+    
+    glfwSwapBuffers(handle);
+    glfwPollEvents();
 }
-GLuint load_program(std::string path) {
-    GLuint program = glCreateProgram();
-    glObjectLabel(GL_PROGRAM, program, path.size(), path.c_str());
 
-    GLuint vert = load_shader(path + ".vert", GL_VERTEX_SHADER);
-    GLuint frag = load_shader(path + ".frag", GL_FRAGMENT_SHADER);
+dvec2 Window::get_mouse_pos() {
+    f64 px, py;
+    i32 width, height;
+    glfwGetCursorPos(handle, &px, &py);
+    glfwGetWindowSize(handle, &width, &height);
 
-    glAttachShader(program, vert);
-    glAttachShader(program, frag);
-
-    glLinkProgram(program);
-    glValidateProgram(program);
-
-    glDetachShader(program, vert);
-    glDetachShader(program, frag);
-
-    glDeleteShader(vert);
-    glDeleteShader(frag);
-
-    return program;
+    return {
+        2.0 * (px / width)  - 1.0,
+        1.0 - 2.0f * (py / height)
+    };
+}
+ivec2 Window::inner_size() {
+    ivec2 size;
+    glfwGetWindowSize(handle, &size.x, &size.y);
+    return size;
 }

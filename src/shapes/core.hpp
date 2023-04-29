@@ -1,72 +1,97 @@
-#include "../prelude.hpp"
-#include "../canvas.hpp"
-
-
-
-struct Ray {
-    Vec3 pos = { 0.0, 0.0, 0.0 };
-    Vec3 dir = { 0.0, 0.0, 0.0 };
-};
-
-struct Hit {
-    Vec3 pos = { 0.0, 0.0, 0.0 };
-    Vec3 normal = { 0.0, 0.0, 0.0 };
-    f32 dist = INFINITY;
-    bool hit = false;
-
-    void draw(Canvas& cnv) {
-        cnv.arrow(pos, 5 * cnv.style.width * normal);
-    }
-};
-
-
-
-struct Shape {
-    virtual void draw(Canvas& cnv) const {};
-    virtual Hit intersect(Ray ray) const { return {}; };
-};
+#pragma once
+#include "../core.hpp"
 
 struct Plane : public Shape {
-    Vec3 m_pos;
-    Vec3 m_normal;
+    Material m_material; 
+    Vec3f m_pos;
+    Unit<Vec3f> m_dir;
 
-    Plane(Vec3 pos, Vec3 normal);
+    Plane& with_material(Material material);
+    Plane& with_pos(Vec3f pos);
+    Plane& with_dir(Unit<Vec3f> dir);
+    std::shared_ptr<Shape> build() {
+        auto out = std::make_shared<Plane>();
+        *out = *this;
+        return out;
+    }
 
-    void draw(Canvas& cnv) const override;
-    Hit intersect(Ray ray) const override;
+    void format(std::ostream& out, size_t indent) const override;
+
+    Intersection intersect(Ray ray) const override;
 };
+
+struct Disc : public Shape {
+    Material m_material; 
+    Vec3f m_pos;
+    Float m_radius;
+
+    Unit<Vec3f> m_dir;
+
+    Disc& with_material(Material material);
+    Disc& with_pos(Vec3f pos);
+    Disc& with_dir(Unit<Vec3f> dir);
+    Disc& with_radius(Float radius);
+
+    std::shared_ptr<Shape> build() {
+        auto out = std::make_shared<Disc>();
+        *out = *this;
+        return out;
+    }
+
+    void format(std::ostream& out, size_t indent) const override;
+
+    Intersection intersect(Ray ray) const override;
+};
+
+struct Diamond : public Shape {
+    Material m_material; 
+
+    Vec3f m_pos;
+    Vec3f m_a;
+    Vec3f m_b;
+    Unit<Vec3f> m_dir;
+
+    Diamond& with_material(Material material);
+    Diamond& with_pos(Vec3f value);
+    Diamond& with_a(Vec3f a);
+    Diamond& with_b(Vec3f b);
+    std::shared_ptr<Shape> build() {
+        auto out = std::make_shared<Diamond>();
+        *out = *this;
+        out->m_dir = m_a.cross(m_b).unit();
+        return out;
+    }
+
+    void format(std::ostream& out, size_t indent) const override;
+    Intersection intersect(Ray ray) const override;
+};
+
 
 struct Sphere : public Shape {
-    Vec3 m_pos;
-    f32  m_radius;
+    Material m_material; 
+    Vec3f m_pos;
+    Float  m_radius;
 
-    Sphere(Vec3 pos, f32 radius);
-    
-    void draw(Canvas& cnv) const override;
-    Hit intersect(Ray ray) const override;
+    Sphere& with_material(Material material);
+    Sphere& with_pos(Vec3f value);
+    Sphere& with_radius(Float value);
+    std::shared_ptr<Shape> build() {
+        auto out = std::make_shared<Sphere>();
+        *out = *this;
+        return out;
+    }
+
+    void format(std::ostream& out, size_t indent) const override;
+    Intersection intersect(Ray ray) const override;
 };
 
+struct ShapeList : public Shape {
+    std::vector<std::shared_ptr<Shape>> data;
 
-
-struct Scene : public Shape {
-    std::vector<std::unique_ptr<Shape>> data;
-    
-    void draw(Canvas& cnv) const {
-        for (auto& shape : this->data) {
-            shape->draw(cnv);
-        } 
+    void format(std::ostream& out, size_t indent) const override;
+    void add(std::shared_ptr<Shape> shape) {
+        data.push_back(shape);
     }
-    Hit intersect(Ray ray) const {
-        Hit nearest;
 
-        for (auto& shape : this->data) {
-            Hit hit = shape->intersect(ray);
-
-            if (nearest.dist > hit.dist) {
-                nearest = hit;
-            }
-        }
-
-        return nearest;
-    }
+    Intersection intersect(Ray ray) const override;
 };
